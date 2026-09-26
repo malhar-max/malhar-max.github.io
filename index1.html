@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+>
+
+<meta name="theme-color" content="#111827">
+
+<meta
+  http-equiv="Permissions-Policy"
+  content="microphone=(self)"
+>
+
+<title>Noise Measure</title>
+
+<style>
+
+/* =========================
+   BASIC RESET
+========================= */
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  background: #f4f5f7;
+  color: #111827;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+}
+
+
+/* =========================
+   MAIN CONTAINER
+========================= */
+
+.container {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 28px 18px 45px;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.small-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: #6b7280;
+}
+
+h1 {
+  margin: 12px 0 8px;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: -1.5px;
+}
+
+.subtitle {
+  margin: 0 0 28px;
+  font-size: 18px;
+  line-height: 1.4;
+  color: #6b7280;
+}
+
+
+/* =========================
+   MAIN CARD
+========================= */
+
+.card {
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.07);
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+.status {
+  display: inline-block;
+  max-width: 100%;
+  background: #eef2f7;
+  border-radius: 50px;
+  padding: 10px 15px;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+
+/* =========================
+   METER
+========================= */
+
+.meter {
+  position: relative;
+  width: 100%;
+  height: 240px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border-radius: 24px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      #ffffff,
+      #f3f4f6
+    );
+
+  overflow: hidden;
+}
+
+
+/* semicircle */
+
+.meter::before {
+
+  content: "";
+
+  position: absolute;
+
+  width: 245px;
+  height: 122px;
+
+  border: 20px solid #d7dbe1;
+
+  border-bottom: 0;
+
+  border-radius:
+    245px
+    245px
+    0
+    0;
+
+  top: 62px;
+
+}
+
+
+/* needle */
+
+.needle {
+
+  position: absolute;
+
+  width: 5px;
+  height: 94px;
+
+  left: 50%;
+  bottom: 48px;
+
+  background: #111827;
+
+  border-radius: 6px;
+
+  transform-origin:
+    50% 100%;
+
+  transform:
+    translateX(-50%)
+    rotate(-65deg);
+
+  transition:
+    transform
+    0.12s linear;
+
+  z-index: 3;
+}
+
+
+/* center value */
+
+.value {
+
+  position: relative;
+
+  margin-top: 95px;
+
+  text-align: center;
+
+  z-index: 5;
+}
+
+.value strong {
+
+  font-size: 48px;
+  font-weight: 800;
+
+}
+
+.value span {
+
+  margin-left: 4px;
+
+  font-size: 16px;
+
+  color: #6b7280;
+
+}
+
+
+/* =========================
+   SCALE
+========================= */
+
+.scale {
+
+  display: flex;
+
+  justify-content:
+    space-between;
+
+  margin:
+    4px 8px 18px;
+
+  font-size: 12px;
+
+  color: #6b7280;
+
+}
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+button {
+
+  width: 100%;
+
+  border: none;
+
+  border-radius: 16px;
+
+  padding: 17px;
+
+  background: #111827;
+
+  color: white;
+
+  font-size: 17px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  touch-action: manipulation;
+
+}
+
+button:active {
+
+  transform:
+    scale(0.99);
+
+}
+
+button:disabled {
+
+  opacity: 0.45;
+
+  cursor:
+    not-allowed;
+
+}
+
+.stop-button {
+
+  margin-top: 10px;
+
+  background: #e5e7eb;
+
+  color: #111827;
+
+}
+
+
+/* =========================
+   STATS
+========================= */
+
+.stats {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 10px;
+
+  margin-top: 14px;
+
+}
+
+.stat {
+
+  background: #f5f6f8;
+
+  border-radius: 18px;
+
+  padding: 15px 8px;
+
+  text-align: center;
+
+}
+
+.stat-value {
+
+  display: block;
+
+  font-size: 24px;
+
+  font-weight: 800;
+
+}
+
+.stat-label {
+
+  display: block;
+
+  margin-top: 3px;
+
+  font-size: 12px;
+
+  color: #6b7280;
+
+}
+
+
+/* =========================
+   INFORMATION BOXES
+========================= */
+
+.info {
+
+  margin-top: 16px;
+
+  padding: 18px;
+
+  background: white;
+
+  border-radius: 20px;
+
+}
+
+.info-title {
+
+  font-weight: 800;
+
+}
+
+.info p {
+
+  margin:
+    8px 0 0;
+
+  color: #6b7280;
+
+  line-height: 1.5;
+
+}
+
+
+/* =========================
+   CALIBRATION
+========================= */
+
+.calibration {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  margin-top: 14px;
+
+  color: #6b7280;
+
+  font-size: 14px;
+
+}
+
+#offset {
+
+  width: 80px;
+
+  padding: 9px;
+
+  border:
+    1px solid #d1d5db;
+
+  border-radius: 9px;
+
+  font-size: 15px;
+
+}
+
+
+/* =========================
+   ERROR MESSAGE
+========================= */
+
+.error-box {
+
+  display: none;
+
+  margin-top: 14px;
+
+  padding: 14px;
+
+  background: #fee2e2;
+
+  border:
+    1px solid #fca5a5;
+
+  color: #991b1b;
+
+  border-radius: 14px;
+
+  font-size: 14px;
+
+  line-height: 1.5;
+
+}
+
+.error-title {
+
+  font-weight: 800;
+
+  margin-bottom: 4px;
+
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 480px) {
+
+  .container {
+
+    padding:
+      24px
+      16px
+      40px;
+
+  }
+
+  h1 {
+
+    font-size: 40px;
+
+  }
+
+  .subtitle {
+
+    font-size: 17px;
+
+  }
+
+  .card {
+
+    padding: 20px;
+
+    border-radius: 25px;
+
+  }
+
+  .meter {
+
+    height: 225px;
+
+  }
+
+  .meter::before {
+
+    width: 235px;
+    height: 118px;
+
+  }
+
+  .value strong {
+
+    font-size: 44px;
+
+  }
+
+}
+
+
+/* =========================
+   VERY SMALL PHONES
+========================= */
+
+@media (max-width: 360px) {
+
+  h1 {
+
+    font-size: 34px;
+
+  }
+
+  .meter {
+
+    height: 210px;
+
+  }
+
+  .meter::before {
+
+    width: 210px;
+
+  }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+  <!-- =========================
+       HEADER
+  ========================== -->
+
+  <div class="small-title">
+    MICROPHONE TOOL
+  </div>
+
+  <h1>
+    Noise Measure
+  </h1>
+
+  <p class="subtitle">
+    Estimate your surroundings in decibels.
+  </p>
+
+
+  <!-- =========================
+       MAIN CARD
+  ========================== -->
+
+  <div class="card">
+
+
+    <!-- STATUS -->
+
+    <div
+      id="status"
+      class="status"
+    >
+      Ready — microphone not active
+    </div>
+
+
+    <!-- METER -->
+
+    <div class="meter">
+
+      <div
+        id="needle"
+        class="needle"
+      ></div>
+
+      <div class="value">
+
+        <strong id="db">
+          --
+        </strong>
+
+        <span>
+          dB
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <!-- SCALE -->
+
+    <div class="scale">
+
+      <span>30</span>
+
+      <span>50</span>
+
+      <span>70</span>
+
+      <span>90</span>
+
+      <span>110+</span>
+
+    </div>
+
+
+    <!-- START -->
+
+    <button
+      id="startButton"
+      type="button"
+    >
+      Start measuring
+    </button>
+
+
+    <!-- STOP -->
+
+    <button
+      id="stopButton"
+      class="stop-button"
+      type="button"
+      disabled
+    >
+      Stop
+    </button>
+
+
+    <!-- STATS -->
+
+    <div class="stats">
+
+
+      <div class="stat">
+
+        <span
+          id="average"
+          class="stat-value"
+        >
+          --
+        </span>
+
+        <span class="stat-label">
+          Average
+        </span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <span
+          id="peak"
+          class="stat-value"
+        >
+          --
+        </span>
+
+        <span class="stat-label">
+          Peak
+        </span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <span
+          id="samples"
+          class="stat-value"
+        >
+          0
+        </span>
+
+        <span class="stat-label">
+          Samples
+        </span>
+
+      </div>
+
+
+    </div>
+
+
+    <!-- ERROR -->
+
+    <div
+      id="errorBox"
+      class="error-box"
+    >
+
+      <div class="error-title">
+        Microphone Error
+      </div>
+
+      <div id="errorText"></div>
+
+    </div>
+
+
+  </div>
+
+
+  <!-- =========================
+       PERMISSION INFORMATION
+  ========================== -->
+
+  <div class="info">
+
+    <div class="info-title">
+      Microphone permission
+    </div>
+
+    <p>
+      Tap <b>Start measuring</b>.
+      Chrome should ask for microphone
+      permission. Select <b>Allow</b>.
+    </p>
+
+    <p>
+      Audio is processed locally in your
+      browser and is not uploaded.
+    </p>
+
+  </div>
+
+
+  <!-- =========================
+       ACCURACY
+  ========================== -->
+
+  <div class="info">
+
+    <div class="info-title">
+      Accuracy
+    </div>
+
+    <p>
+      This app provides an estimated sound
+      level using your phone microphone.
+      It is not a calibrated professional
+      sound-level meter.
+    </p>
+
+
+    <div class="calibration">
+
+      <span>
+        Calibration offset:
+      </span>
+
+      <input
+        id="offset"
+        type="number"
+        value="0"
+        step="1"
+      >
+
+      <span>
+        dB
+      </span>
+
+    </div>
+
+  </div>
+
+
+</div>
+
+
+
+<script>
+
+/* =========================================================
+   NOISE MEASURE
+   ========================================================= */
+
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const startButton =
+  document.getElementById(
+    "startButton"
+  );
+
+const stopButton =
+  document.getElementById(
+    "stopButton"
+  );
+
+const statusElement =
+  document.getElementById(
+    "status"
+  );
+
+const dbElement =
+  document.getElementById(
+    "db"
+  );
+
+const averageElement =
+  document.getElementById(
+    "average"
+  );
+
+const peakElement =
+  document.getElementById(
+    "peak"
+  );
+
+const samplesElement =
+  document.getElementById(
+    "samples"
+  );
+
+const needleElement =
+  document.getElementById(
+    "needle"
+  );
+
+const offsetElement =
+  document.getElementById(
+    "offset"
+  );
+
+const errorBox =
+  document.getElementById(
+    "errorBox"
+  );
+
+const errorText =
+  document.getElementById(
+    "errorText"
+  );
+
+
+/* =========================
+   AUDIO VARIABLES
+========================= */
+
+let audioContext = null;
+
+let microphoneStream = null;
+
+let microphoneSource = null;
+
+let analyser = null;
+
+let audioData = null;
+
+let animationFrame = null;
+
+let measuring = false;
+
+
+/* =========================
+   DATA
+========================= */
+
+let readings = [];
+
+let peakValue = 0;
+
+
+/* =========================
+   STATUS
+========================= */
+
+function setStatus(message) {
+
+  statusElement.textContent =
+    message;
+
+}
+
+
+/* =========================
+   ERROR
+========================= */
+
+function showError(message) {
+
+  errorText.textContent =
+    message;
+
+  errorBox.style.display =
+    "block";
+
+}
+
+function hideError() {
+
+  errorBox.style.display =
+    "none";
+
+}
+
+
+/* =========================
+   CHECK BROWSER
+========================= */
+
+function checkBrowser() {
+
+  if (!window.isSecureContext) {
+
+    showError(
+      "Microphone access requires HTTPS. " +
+      "Open the GitHub Pages HTTPS address."
+    );
+
+    return false;
+
+  }
+
+
+  if (
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ) {
+
+    showError(
+      "This browser does not support " +
+      "microphone access. Please use " +
+      "the full Google Chrome app."
+    );
+
+    return false;
+
+  }
+
+
+  return true;
+
+}
+
+
+/* =========================
+   START MEASUREMENT
+========================= */
+
+async function startMeasurement() {
+
+  hideError();
+
+
+  if (!checkBrowser()) {
+
+    return;
+
+  }
+
+
+  try {
+
+    setStatus(
+      "Requesting microphone permission..."
+    );
+
+
+    /*
+      IMPORTANT:
+
+      getUserMedia() is called directly
+      from the Start button action.
+    */
+
+    microphoneStream =
+      await navigator.mediaDevices
+      .getUserMedia({
+
+        audio: {
+
+          echoCancellation: false,
+
+          autoGainControl: false,
+
+          noiseSuppression: false
+
+        },
+
+        video: false
+
+      });
+
+
+    /*
+      CREATE AUDIO CONTEXT
+    */
+
+    audioContext =
+      new (
+        window.AudioContext ||
+        window.webkitAudioContext
+      )();
+
+
+    if (
+      audioContext.state ===
+      "suspended"
+    ) {
+
+      await audioContext.resume();
+
+    }
+
+
+    /*
+      MICROPHONE SOURCE
+    */
+
+    microphoneSource =
+      audioContext
+      .createMediaStreamSource(
+        microphoneStream
+      );
+
+
+    /*
+      ANALYSER
+    */
+
+    analyser =
+      audioContext
+      .createAnalyser();
+
+
+    analyser.fftSize =
+      2048;
+
+
+    analyser.smoothingTimeConstant =
+      0.2;
+
+
+    /*
+      CONNECT MICROPHONE
+    */
+
+    microphoneSource.connect(
+      analyser
+    );
+
+
+    /*
+      AUDIO DATA ARRAY
+    */
+
+    audioData =
+      new Float32Array(
+        analyser.fftSize
+      );
+
+
+    /*
+      RESET DATA
+    */
+
+    readings = [];
+
+    peakValue = 0;
+
+
+    /*
+      UI
+    */
+
+    measuring = true;
+
+    startButton.disabled =
+      true;
+
+    stopButton.disabled =
+      false;
+
+
+    setStatus(
+      "Measuring — microphone active"
+    );
+
+
+    /*
+      START LOOP
+    */
+
+    measureSound();
+
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Microphone error:",
+      error
+    );
+
+
+    cleanupAudio();
+
+
+    measuring = false;
+
+    startButton.disabled =
+      false;
+
+    stopButton.disabled =
+      true;
+
+
+    setStatus(
+      "Microphone permission needed"
+    );
+
+
+    /*
+      PERMISSION DENIED
+    */
+
+    if (
+      error.name ===
+      "NotAllowedError"
+    ) {
+
+      showError(
+        "Permission denied. " +
+        "In Chrome, open the site settings " +
+        "and allow Microphone access, " +
+        "then press Start measuring again."
+      );
+
+      return;
+
+    }
+
+
+    /*
+      NO MICROPHONE
+    */
+
+    if (
+      error.name ===
+      "NotFoundError"
+    ) {
+
+      showError(
+        "No microphone was found on this device."
+      );
+
+      return;
+
+    }
+
+
+    /*
+      SECURITY ERROR
+    */
+
+    if (
+      error.name ===
+      "SecurityError"
+    ) {
+
+      showError(
+        "The browser blocked microphone access. " +
+        "Make sure you are using the HTTPS " +
+        "GitHub Pages address."
+      );
+
+      return;
+
+    }
+
+
+    /*
+      OTHER ERROR
+    */
+
+    showError(
+      "Microphone access failed: " +
+      error.name
+    );
+
+  }
+
+}
+
+
+/* =========================
+   MEASURE SOUND
+========================= */
+
+function measureSound() {
+
+  if (!measuring) {
+
+    return;
+
+  }
+
+
+  /*
+    GET AUDIO DATA
+  */
+
+  analyser.getFloatTimeDomainData(
+    audioData
+  );
+
+
+  /*
+    CALCULATE RMS
+  */
+
+  let sum = 0;
+
+
+  for (
+    let i = 0;
+    i < audioData.length;
+    i++
+  ) {
+
+    sum +=
+      audioData[i] *
+      audioData[i];
+
+  }
+
+
+  const rms =
+    Math.sqrt(
+      sum /
+      audioData.length
+    );
+
+
+  /*
+    ESTIMATE dB
+
+    This uses a reference offset
+    suitable for a rough phone
+    microphone estimate.
+
+    It is NOT calibrated SPL.
+  */
+
+  const rawDb =
+    20 *
+    Math.log10(
+      Math.max(
+        rms,
+        0.0000001
+      )
+    )
+    + 94;
+
+
+  /*
+    CALIBRATION
+  */
+
+  const calibration =
+    parseFloat(
+      offsetElement.value
+    ) || 0;
+
+
+  let db =
+    rawDb +
+    calibration;
+
+
+  /*
+    LIMIT DISPLAY
+  */
+
+  db =
+    Math.max(
+      20,
+      Math.min(
+        120,
+        db
+      )
+    );
+
+
+  /*
+    DISPLAY
+  */
+
+  dbElement.textContent =
+    Math.round(db);
+
+
+  /*
+    NEEDLE
+
+    30 dB = -65°
+    120 dB = +70°
+  */
+
+  const limited =
+    Math.max(
+      30,
+      Math.min(
+        120,
+        db
+      )
+    );
+
+
+  const angle =
+    -65 +
+    (
+      limited - 30
+    ) *
+    1.5;
+
+
+  needleElement.style.transform =
+    "translateX(-50%) rotate(" +
+    angle +
+    "deg)";
+
+
+  /*
+    SAVE READING
+  */
+
+  readings.push(db);
+
+
+  /*
+    PEAK
+  */
+
+  if (
+    db >
+    peakValue
+  ) {
+
+    peakValue =
+      db;
+
+  }
+
+
+  /*
+    AVERAGE
+  */
+
+  let total = 0;
+
+
+  for (
+    let i = 0;
+    i < readings.length;
+    i++
+  ) {
+
+    total +=
+      readings[i];
+
+  }
+
+
+  const average =
+    total /
+    readings.length;
+
+
+  /*
+    UPDATE STATS
+  */
+
+  averageElement.textContent =
+    Math.round(
+      average
+    );
+
+
+  peakElement.textContent =
+    Math.round(
+      peakValue
+    );
+
+
+  samplesElement.textContent =
+    readings.length;
+
+
+  /*
+    NEXT FRAME
+  */
+
+  animationFrame =
+    requestAnimationFrame(
+      measureSound
+    );
+
+}
+
+
+/* =========================
+   CLEANUP AUDIO
+========================= */
+
+function cleanupAudio() {
+
+
+  /*
+    STOP MICROPHONE
+  */
+
+  if (
+    microphoneStream
+  ) {
+
+    microphoneStream
+      .getTracks()
+      .forEach(
+        function(track) {
+
+          track.stop();
+
+        }
+      );
+
+  }
+
+
+  /*
+    DISCONNECT SOURCE
+  */
+
+  if (
+    microphoneSource
+  ) {
+
+    try {
+
+      microphoneSource.disconnect();
+
+    }
+
+    catch (e) {}
+
+  }
+
+
+  /*
+    DISCONNECT ANALYSER
+  */
+
+  if (
+    analyser
+  ) {
+
+    try {
+
+      analyser.disconnect();
+
+    }
+
+    catch (e) {}
+
+  }
+
+
+  /*
+    CLOSE AUDIO CONTEXT
+  */
+
+  if (
+    audioContext
+  ) {
+
+    try {
+
+      audioContext.close();
+
+    }
+
+    catch (e) {}
+
+  }
+
+
+  microphoneStream =
+    null;
+
+  microphoneSource =
+    null;
+
+  analyser =
+    null;
+
+  audioContext =
+    null;
+
+  audioData =
+    null;
+
+}
+
+
+/* =========================
+   STOP
+========================= */
+
+function stopMeasurement() {
+
+
+  measuring =
+    false;
+
+
+  /*
+    STOP ANIMATION
+  */
+
+  if (
+    animationFrame
+  ) {
+
+    cancelAnimationFrame(
+      animationFrame
+    );
+
+    animationFrame =
+      null;
+
+  }
+
+
+  /*
+    RELEASE MICROPHONE
+  */
+
+  cleanupAudio();
+
+
+  /*
+    UI
+  */
+
+  startButton.disabled =
+    false;
+
+  stopButton.disabled =
+    true;
+
+
+  setStatus(
+    "Stopped — microphone released"
+  );
+
+}
+
+
+/* =========================
+   BUTTON EVENTS
+========================= */
+
+startButton.addEventListener(
+  "click",
+  startMeasurement
+);
+
+
+stopButton.addEventListener(
+  "click",
+  stopMeasurement
+);
+
+
+/* =========================
+   PAGE EXIT
+========================= */
+
+window.addEventListener(
+  "pagehide",
+  function() {
+
+    measuring =
+      false;
+
+    if (
+      animationFrame
+    ) {
+
+      cancelAnimationFrame(
+        animationFrame
+      );
+
+    }
+
+    cleanupAudio();
+
+  }
+);
+
+
+/* =========================
+   INITIAL STATUS
+========================= */
+
+setStatus(
+  "Ready — microphone not active"
+);
+
+</script>
+
+</body>
+  </html>
